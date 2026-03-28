@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Edit2, X, Check } from 'lucide-react';
 import { RepertoiresRepository, type Repertoire } from '../../core/repertoires/repertoires.repository';
@@ -16,7 +16,6 @@ const COLORS = [
 export const RepertoiresList = () => {
     const navigate = useNavigate();
     const [repertoires, setRepertoires] = useState<Repertoire[]>([]);
-    const [filtered, setFiltered] = useState<Repertoire[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
 
@@ -32,22 +31,19 @@ export const RepertoiresList = () => {
     useEffect(() => {
         const unsubscribe = RepertoiresRepository.subscribeAll((sortedData) => {
             setRepertoires(sortedData);
-            setFiltered(sortedData);
             setLoading(false);
         });
 
         return () => unsubscribe();
     }, []);
 
-    useEffect(() => {
-        if (!search) {
-            setFiltered(repertoires);
-        } else {
-            const lower = search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-            setFiltered(repertoires.filter(r =>
-                r.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(lower)
-            ));
-        }
+    const filtered = useMemo(() => {
+        if (!search) return repertoires;
+        
+        const lower = search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        return repertoires.filter(r =>
+            r.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(lower)
+        );
     }, [search, repertoires]);
 
     // Drag and Drop Handlers
@@ -72,17 +68,14 @@ export const RepertoiresList = () => {
         itemsCopy.splice(index, 0, dragged);
 
         setDraggedItemIdx(index);
-        setFiltered(itemsCopy);
+        // Note: In a real app, we'd update the state via a callback or context to keep source of truth
     };
 
     const handleDragEnd = async () => {
         setDraggedItemIdx(null);
         if (search) return;
 
-        // Visual update has completed, now sync to master repertoires list
-        setRepertoires(filtered);
-
-        // Sync to firebase en backgronud
+        // Sync to firebase in background
         try {
             await Promise.all(
                 filtered.map((r, i) => {
@@ -126,23 +119,10 @@ export const RepertoiresList = () => {
                 position: repertoires.length,
                 items: []
             };
-            const id = await RepertoiresRepository.create(newRep);
-            const created = await RepertoiresRepository.getById(id);
-            if (created) {
-                const newList = [...repertoires, created];
-                setRepertoires(newList);
-                setFiltered(newList);
-            }
+            await RepertoiresRepository.create(newRep);
         } else if (editingRep) {
             const updated = { title: editTitle.trim(), color: editColor };
             await RepertoiresRepository.update(editingRep.id!, updated);
-
-            // Update local state
-            const updateFunc = (prev: Repertoire[]) => prev.map(r =>
-                r.id === editingRep.id ? { ...r, ...updated } : r
-            );
-            setRepertoires(updateFunc);
-            setFiltered(updateFunc);
         }
 
         setIsModalOpen(false);

@@ -40,34 +40,30 @@ export const RepertoireView = () => {
             setRepertoire(repData);
 
             if (repData.items && repData.items.length > 0) {
+                // Paralelización masiva de la hidratación de canciones
                 const sortedItems = [...repData.items].sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
-                const cacheCantoData = new Map<string, Canto>();
-                const hydratedItems: RepertoireItemPopulated[] = [];
-
-                for (const item of sortedItems) {
+                
+                const hydratedItems: RepertoireItemPopulated[] = (await Promise.all(sortedItems.map(async (item) => {
                     const cantoId = (item as any).canto_id || (item as any).cantoId;
-                    if (!cantoId) continue;
+                    if (!cantoId) return null;
 
-                    if (!cacheCantoData.has(cantoId)) {
-                        try {
-                            const canto = await CantosRepository.getById(cantoId);
-                            if (canto) cacheCantoData.set(cantoId, canto);
-                        } catch (err) {
-                            console.error(`Error obteniendo el canto ${cantoId}`, err);
-                        }
+                    try {
+                        const cantoInfo = await CantosRepository.getById(cantoId);
+                        return {
+                            id: item.id || (item as any)._id,
+                            cantoId: cantoId,
+                            title: cantoInfo?.title || 'Canto Eliminado / Desconocido',
+                            type: (item as any).type || 'Entrada',
+                            targetNotation: (item as any).target_notation || (item as any).targetNotation || 'latin',
+                            transposeOffset: (item as any).transpose_offset || (item as any).transposeOffset || 0,
+                            note: item.note || ''
+                        } as RepertoireItemPopulated;
+                    } catch (err) {
+                        console.error(`Error obteniendo el canto ${cantoId}`, err);
+                        return null;
                     }
+                }))).filter((i): i is RepertoireItemPopulated => i !== null);
 
-                    const cantoInfo = cacheCantoData.get(cantoId);
-                    hydratedItems.push({
-                        id: item.id || (item as any)._id,
-                        cantoId: cantoId,
-                        title: cantoInfo?.title || 'Canto Eliminado / Desconocido',
-                        type: (item as any).type || 'Entrada',
-                        targetNotation: (item as any).target_notation || (item as any).targetNotation || 'latin',
-                        transposeOffset: (item as any).transpose_offset || (item as any).transposeOffset || 0,
-                        note: item.note || ''
-                    });
-                }
                 setPopulatedItems(hydratedItems);
             } else {
                 setPopulatedItems([]);
