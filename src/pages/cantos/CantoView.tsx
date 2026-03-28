@@ -14,11 +14,17 @@ export const CantoView = () => {
 
     const [canto, setCanto] = useState<Canto | null>(null);
     const [loading, setLoading] = useState(true);
-    const [offsets, setOffsets] = useState(initialOffset || 0);
+    const { notation, fontSize, setFontSize, cantoOffsets, setCantoOffset } = usePreferencesStore();
+    
+    // El offset inicial viene de:
+    // 1. Preferencia local del usuario para ese canto
+    // 2. Si no hay, o es 0, el offset guardado en el documento (referencia)
+    const storedOffset = id ? cantoOffsets[id] : undefined;
+    const [offsets, setOffsets] = useState(storedOffset !== undefined ? storedOffset : (initialOffset || 0));
+
     const [showTools, setShowTools] = useState(false);
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
-    const { notation, fontSize, setFontSize } = usePreferencesStore();
 
     useEffect(() => {
         if (!id) return;
@@ -73,14 +79,14 @@ export const CantoView = () => {
         if (isRightSwipe) handlePrev();
     };
 
-    const changeOffset = async (delta: number) => {
+    const changeOffset = (delta: number) => {
         const newOffset = offsets + delta;
         setOffsets(newOffset);
-        if (repertoireId && itemId) {
-            await RepertoiresRepository.updateItem(itemId, repertoireId, { transpose_offset: newOffset });
-        } else if (canto?.id) {
-            await CantosRepository.update(canto.id, { transpose_offset: newOffset });
+        if (id) {
+            setCantoOffset(id, newOffset);
         }
+        // NOTA: Ya no actualizamos el repositorio global (RepertoiresRepository/CantosRepository)
+        // para que la transposición sea netamente INDIVIDUAL por usuario.
     };
 
     useEffect(() => {
