@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { BottomNav } from './BottomNav';
 import { usePreferencesStore } from '../../store/preferences';
 import { useEffect } from 'react';
 
@@ -30,6 +31,7 @@ export const AppLayout = () => {
             <main className="app-main" style={{ backgroundColor: 'var(--bg-color)' }}>
                 <Outlet />
             </main>
+            <BottomNav />
         </div>
     );
 };

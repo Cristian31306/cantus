@@ -24,8 +24,11 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-full: 9999px;
-
-  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --z-sidebar: 100;
+  --z-bottom-nav: 90;
+  --z-fab: 110;
+  --z-sheet: 120;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :root[data-theme='light'] {
@@ -138,6 +141,7 @@ button {
   flex-direction: row;
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
 .canto-main {
@@ -188,6 +192,104 @@ button {
   gap: 16px;
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.05);
   overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  display: none;
+  justify-content: space-around;
+  align-items: center;
+  z-index: var(--z-bottom-nav);
+  padding-bottom: env(safe-area-inset-bottom);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.bottom-nav-item.active {
+  color: var(--accent-color);
+}
+
+/* Floating Action Button */
+.fab {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background-color: var(--accent-color);
+  color: white;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  z-index: var(--z-fab);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fab:active {
+  transform: scale(0.9);
+}
+
+/* Bottom Sheet */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-sheet);
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.3s ease;
+}
+
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-surface);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 24px;
+  z-index: calc(var(--z-sheet) + 1);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.2);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bottom-sheet.open {
+  transform: translateY(0);
+}
+
+.bottom-sheet-handle {
+  width: 40px;
+  height: 4px;
+  background-color: var(--border-color);
+  border-radius: 2px;
+  margin: -8px auto 16px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .repertoire-container {
@@ -209,49 +311,55 @@ button {
 }
 
 @media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
 
-  /* Canto Views */
+  .bottom-nav {
+    display: flex;
+  }
+
+  .app-sidebar {
+    display: none !important;
+  }
+
+  .canto-sidebar {
+    display: none !important;
+  }
+
+  .fab {
+    display: flex;
+  }
+
+  /* Canto Views Mobile Optimization */
   .canto-layout {
     flex-direction: column;
   }
 
-  .canto-sidebar {
-    width: 100%;
-    border-left: none;
-    border-top: 1px solid var(--border-color);
-    padding: 20px 16px;
-    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
-    height: auto;
-    max-height: 50vh;
-  }
-
   .canto-main {
-    padding: 20px 16px;
+    padding: 20px 16px 100px; /* Extra padding bottom for FAB and Nav */
   }
 
-  /* Repertoire Views */
+  .canto-main h1 {
+    font-size: 2.25rem !important;
+  }
+
+  /* Repertoire Views Mobile Optimization */
   .repertoire-container {
-    padding: 20px 12px;
+    padding: 24px 16px 100px;
   }
 
   .repertoire-banner {
-    padding: 20px 16px;
+    padding: 24px 16px;
     margin-bottom: 24px;
   }
 
-  /* Main Dashboards */
-  .app-sidebar {
-    width: 68px;
-    /* Compact mobile sidebar */
-    padding: 24px 8px;
-    align-items: center;
+  .repertoire-banner h1 {
+    font-size: 2rem !important;
   }
 
-  .nav-label {
-    display: none;
-  }
-
-  .sidebar-logo-text {
-    display: none;
+  /* General Cards Mobile */
+  .glass-panel {
+    padding: 16px !important;
   }
 }

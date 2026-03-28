@@ -258,7 +258,17 @@ export const RepertoireView = () => {
                             onDragOver={(e) => handleDragOver(e, index)}
                             onDragEnd={handleDragEnd}
                             onClick={() => navigate(`/cantos/${item.cantoId}`, {
-                                state: { repertoireId: id, itemId: item.id, initialOffset: item.transposeOffset }
+                                state: { 
+                                    repertoireId: id, 
+                                    itemId: item.id, 
+                                    initialOffset: item.transposeOffset,
+                                    songList: populatedItems.map(i => ({ 
+                                        id: i.cantoId, 
+                                        title: i.title, 
+                                        itemId: i.id, 
+                                        offset: i.transposeOffset 
+                                    }))
+                                }
                             })}
                             style={{
                                 display: 'flex',

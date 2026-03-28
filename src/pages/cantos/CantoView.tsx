@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, ChevronUp, ChevronDown, Plus, Minus, Edit } from 'lucide-react';
+import { ArrowLeft, ChevronUp, ChevronDown, Plus, Minus, Edit, Settings, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CantosRepository, type Canto } from '../../core/cantos/cantos.repository';
 import { RepertoiresRepository } from '../../core/repertoires/repertoires.repository';
 import { ChordProParser } from '../../core/music/chordpro';
@@ -10,11 +10,14 @@ export const CantoView = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { state } = useLocation();
-    const { repertoireId, itemId, initialOffset } = state || {};
+    const { repertoireId, itemId, initialOffset, songList } = state || {};
 
     const [canto, setCanto] = useState<Canto | null>(null);
     const [loading, setLoading] = useState(true);
     const [offsets, setOffsets] = useState(initialOffset || 0);
+    const [showTools, setShowTools] = useState(false);
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
     const { notation, fontSize, setFontSize } = usePreferencesStore();
 
     useEffect(() => {
@@ -30,7 +33,45 @@ export const CantoView = () => {
             setLoading(false);
         };
         fetchCanto();
-    }, [id, repertoireId]);
+    }, [id]);
+
+    // Lógica de Navegación Lateral
+    const currentSongIndex = songList?.findIndex((s: any) => s.id === id);
+    const hasNext = songList && currentSongIndex < songList.length - 1;
+    const hasPrev = songList && currentSongIndex > 0;
+
+    const navigateToSong = (index: number) => {
+        const nextSong = songList[index];
+        navigate(`/cantos/${nextSong.id}`, {
+            state: { 
+                repertoireId, 
+                itemId: nextSong.itemId, 
+                initialOffset: nextSong.offset,
+                songList 
+            },
+            replace: true
+        });
+        window.scrollTo(0, 0);
+    };
+
+    const handleNext = () => hasNext && navigateToSong(currentSongIndex + 1);
+    const handlePrev = () => hasPrev && navigateToSong(currentSongIndex - 1);
+
+    // Swipe detection
+    const minSwipeDistance = 50;
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+    const onTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+        if (isLeftSwipe) handleNext();
+        if (isRightSwipe) handlePrev();
+    };
 
     const changeOffset = async (delta: number) => {
         const newOffset = offsets + delta;
@@ -171,17 +212,42 @@ export const CantoView = () => {
             {/* Contenido Principal */}
             <div className="canto-main">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <button
-                        onClick={() => navigate(-1)} // Retroceso histórico react-router
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}
-                    >
-                        <ArrowLeft size={20} /> Volver
-                    </button>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button
+                            onClick={() => navigate(repertoireId ? `/repertoires/${repertoireId}` : '/cantos')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', padding: '8px 12px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-surface-hover)' }}
+                        >
+                            <ArrowLeft size={20} /> <span className="desktop-only">{repertoireId ? 'Repertorio' : 'Volver'}</span>
+                        </button>
+                        
+                        {songList && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-md)', padding: '4px' }}>
+                                <button 
+                                    onClick={handlePrev} 
+                                    disabled={!hasPrev}
+                                    style={{ padding: '6px', color: hasPrev ? 'var(--text-primary)' : 'var(--text-tertiary)', opacity: hasPrev ? 1 : 0.4 }}
+                                >
+                                    <ChevronLeft size={22} />
+                                </button>
+                                <span style={{ fontSize: '0.875rem', fontWeight: 600, padding: '0 8px', color: 'var(--text-secondary)' }}>
+                                    {currentSongIndex + 1} / {songList.length}
+                                </span>
+                                <button 
+                                    onClick={handleNext} 
+                                    disabled={!hasNext}
+                                    style={{ padding: '6px', color: hasNext ? 'var(--text-primary)' : 'var(--text-tertiary)', opacity: hasNext ? 1 : 0.4 }}
+                                >
+                                    <ChevronRight size={22} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
                     <button
                         onClick={() => navigate(`/cantos/${canto.id}/edit`)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)', fontWeight: 600 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)', fontWeight: 600, padding: '8px 12px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-surface-hover)' }}
                     >
-                        <Edit size={20} /> Editar Canto
+                        <Edit size={20} /> <span className="desktop-only">Editar</span>
                     </button>
                 </div>
 
@@ -190,78 +256,125 @@ export const CantoView = () => {
                     {canto.category}
                 </p>
 
-                <div style={{
-                    marginTop: '40px',
-                    lineHeight: 1.8
-                }}>
+                <div 
+                    onTouchStart={onTouchStart}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={onTouchEnd}
+                    style={{
+                        marginTop: '40px',
+                        lineHeight: 1.8,
+                        minHeight: '60vh'
+                    }}
+                >
                     {renderVerses(contentToRender)}
                 </div>
             </div>
 
-            {/* Sidebar de Herramientas */}
+            {/* Sidebar de Herramientas (Escritorio) */}
             <div className="canto-sidebar">
-                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '8px' }}>Herramientas Web</h3>
-
-                {/* Tono Original */}
-                <div style={{ padding: '16px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-md)' }}>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Tono Original</p>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-color)' }}>{canto.key || 'N/A'}</p>
-                </div>
-
-                {/* Panel de Transposición */}
-                <div className="glass-panel" style={{ padding: '20px', borderRadius: 'var(--radius-md)' }}>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Transposición</p>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <button
-                            onClick={() => changeOffset(-1)}
-                            style={{ padding: '8px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-sm)' }}
-                        >
-                            <ChevronDown size={24} />
-                        </button>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, width: '40px', textAlign: 'center' }}>
-                            {offsets > 0 ? `+${offsets}` : offsets}
-                        </div>
-                        <button
-                            onClick={() => changeOffset(1)}
-                            style={{ padding: '8px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-sm)' }}
-                        >
-                            <ChevronUp size={24} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Panel de Tamaño de Letra */}
-                <div className="glass-panel" style={{ padding: '20px', borderRadius: 'var(--radius-md)' }}>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Tamaño de Letra</p>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <button
-                            onClick={() => setFontSize(Math.max(12, fontSize - 2))}
-                            style={{ padding: '8px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-sm)' }}
-                        >
-                            <Minus size={20} />
-                        </button>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 600, width: '40px', textAlign: 'center' }}>
-                            {fontSize}
-                        </div>
-                        <button
-                            onClick={() => setFontSize(Math.min(48, fontSize + 2))}
-                            style={{ padding: '8px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-sm)' }}
-                        >
-                            <Plus size={20} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Utilidades Adicionales (Ej: Notas) */}
-                {canto.note && (
-                    <div style={{ marginTop: 'auto', padding: '16px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', backgroundColor: 'rgba(234, 179, 8, 0.05)' }}>
-                        <strong style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Notas Privadas:</strong>
-                        <p style={{ fontSize: '0.875rem', lineHeight: 1.5, color: 'var(--text-primary)' }}>
-                            {canto.note}
-                        </p>
-                    </div>
-                )}
+                <ToolsContent 
+                    canto={canto} 
+                    offsets={offsets} 
+                    changeOffset={changeOffset} 
+                    fontSize={fontSize} 
+                    setFontSize={setFontSize} 
+                />
             </div>
+
+            {/* Floating Action Button (Móvil) */}
+            <button className="fab" onClick={() => setShowTools(true)}>
+                <Settings size={28} />
+            </button>
+
+            {/* Bottom Sheet (Móvil) */}
+            {showTools && (
+                <>
+                    <div className="bottom-sheet-overlay" onClick={() => setShowTools(false)} />
+                    <div className="bottom-sheet open">
+                        <div className="bottom-sheet-handle" onClick={() => setShowTools(false)} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Herramientas</h3>
+                            <button onClick={() => setShowTools(false)} style={{ color: 'var(--text-secondary)' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <ToolsContent 
+                            canto={canto} 
+                            offsets={offsets} 
+                            changeOffset={changeOffset} 
+                            fontSize={fontSize} 
+                            setFontSize={setFontSize} 
+                        />
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
+// Componente interno para reutilizar el contenido de herramientas
+const ToolsContent = ({ canto, offsets, changeOffset, fontSize, setFontSize }: any) => {
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Tono Original */}
+            <div style={{ padding: '16px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-md)' }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Tono Original</p>
+                <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-color)' }}>{canto.key || 'N/A'}</p>
+            </div>
+
+            {/* Panel de Transposición */}
+            <div className="glass-panel" style={{ padding: '20px', borderRadius: 'var(--radius-md)' }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Transposición</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <button
+                        onClick={() => changeOffset(-1)}
+                        style={{ padding: '8px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-sm)' }}
+                    >
+                        <ChevronDown size={24} />
+                    </button>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, width: '40px', textAlign: 'center' }}>
+                        {offsets > 0 ? `+${offsets}` : offsets}
+                    </div>
+                    <button
+                        onClick={() => changeOffset(1)}
+                        style={{ padding: '8px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-sm)' }}
+                    >
+                        <ChevronUp size={24} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Panel de Tamaño de Letra */}
+            <div className="glass-panel" style={{ padding: '20px', borderRadius: 'var(--radius-md)' }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Tamaño de Letra</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <button
+                        onClick={() => setFontSize(Math.max(12, fontSize - 2))}
+                        style={{ padding: '8px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-sm)' }}
+                    >
+                        <Minus size={20} />
+                    </button>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 600, width: '40px', textAlign: 'center' }}>
+                        {fontSize}
+                    </div>
+                    <button
+                        onClick={() => setFontSize(Math.min(48, fontSize + 2))}
+                        style={{ padding: '8px', backgroundColor: 'var(--bg-surface-hover)', borderRadius: 'var(--radius-sm)' }}
+                    >
+                        <Plus size={20} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Utilidades Adicionales (Ej: Notas) */}
+            {canto.note && (
+                <div style={{ marginTop: '8px', padding: '16px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', backgroundColor: 'rgba(234, 179, 8, 0.05)' }}>
+                    <strong style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Notas Privadas:</strong>
+                    <p style={{ fontSize: '0.875rem', lineHeight: 1.5, color: 'var(--text-primary)' }}>
+                        {canto.note}
+                    </p>
+                </div>
+            )}
         </div>
     );
 };
