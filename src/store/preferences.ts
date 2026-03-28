@@ -9,11 +9,13 @@ interface PreferencesState {
     theme: 'light' | 'dark' | 'system';
     cantoOffsets: Record<string, number>;
     cantoFontSizes: Record<string, number>;
+    cantosCategoryFilter: string;
     setNotation: (notation: Notation) => void;
     setFontSize: (size: number) => void;
     setTheme: (theme: 'light' | 'dark' | 'system') => void;
     setCantoOffset: (cantoId: string, offset: number) => void;
     setCantoFontSize: (cantoId: string, size: number) => void;
+    setCantosCategoryFilter: (category: string) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -24,6 +26,7 @@ export const usePreferencesStore = create<PreferencesState>()(
             theme: 'system',
             cantoOffsets: {},
             cantoFontSizes: {},
+            cantosCategoryFilter: '',
             setNotation: (notation) => set({ notation }),
             setFontSize: (fontSize) => set({ fontSize }),
             setTheme: (theme) => set({ theme }),
@@ -32,7 +35,8 @@ export const usePreferencesStore = create<PreferencesState>()(
             })),
             setCantoFontSize: (cantoId, size) => set((state) => ({
                 cantoFontSizes: { ...state.cantoFontSizes, [cantoId]: size }
-            }))
+            })),
+            setCantosCategoryFilter: (category) => set({ cantosCategoryFilter: category })
         }),
         {
             name: 'cantus-preferences',

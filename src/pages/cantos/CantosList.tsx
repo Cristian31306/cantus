@@ -1,12 +1,14 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, ListFilter } from 'lucide-react';
 import { CantosRepository, type Canto } from '../../core/cantos/cantos.repository';
+import { usePreferencesStore } from '../../store/preferences';
 
 export const CantosList = () => {
     const navigate = useNavigate();
     const [cantos, setCantos] = useState<Canto[]>([]);
     const [search, setSearch] = useState('');
+    const { cantosCategoryFilter, setCantosCategoryFilter } = usePreferencesStore();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,8 +24,19 @@ export const CantosList = () => {
         return () => unsubscribe();
     }, []);
 
+    const categories = useMemo(() => {
+        const cats = new Set(cantos.map(c => c.category || 'General'));
+        return Array.from(cats);
+    }, [cantos]);
+
     const filtered = useMemo(() => {
-        if (!search) return cantos;
+        let results = cantos;
+
+        if (cantosCategoryFilter) {
+            results = results.filter(c => (c.category || 'General') === cantosCategoryFilter);
+        }
+
+        if (!search) return results;
 
         const normalizeText = (text: string) => {
             if (!text) return '';
@@ -31,7 +44,7 @@ export const CantosList = () => {
         };
         const lowerQuery = normalizeText(search);
 
-        const results = cantos.filter(c =>
+        results = results.filter(c =>
             normalizeText(c.title).includes(lowerQuery) ||
             normalizeText(c.category).includes(lowerQuery) ||
             (c.content && normalizeText(c.content).includes(lowerQuery))
@@ -45,7 +58,7 @@ export const CantosList = () => {
             if (!aTitleMatch && bTitleMatch) return 1;
             return 0;
         });
-    }, [search, cantos]);
+    }, [search, cantos, cantosCategoryFilter]);
 
     return (
         <div style={{ padding: '40px' }}>
@@ -60,15 +73,37 @@ export const CantosList = () => {
                 </button>
             </div>
 
-            <div style={{ marginBottom: '24px', position: 'relative' }}>
-                <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+            <div className="input-field" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', padding: '0', overflow: 'hidden', maxWidth: '700px' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px', borderRight: '1px solid var(--border-color)', alignSelf: 'stretch', cursor: 'pointer', backgroundColor: cantosCategoryFilter ? 'rgba(59, 130, 246, 0.1)' : 'transparent', transition: 'var(--transition)' }}>
+                    <ListFilter size={20} color={cantosCategoryFilter ? 'var(--accent-color)' : 'var(--text-secondary)'} />
+                    {cantosCategoryFilter && (
+                        <span style={{ marginLeft: '8px', fontSize: '0.875rem', fontWeight: 600, color: 'var(--accent-color)' }}>
+                            {cantosCategoryFilter}
+                        </span>
+                    )}
+                    <select 
+                        title="Filtrar por categoría"
+                        value={cantosCategoryFilter} 
+                        onChange={(e) => setCantosCategoryFilter(e.target.value)}
+                        style={{ 
+                            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                            opacity: 0, cursor: 'pointer', appearance: 'none'
+                        }}
+                    >
+                        <option value="">Todas las categorías</option>
+                        {categories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <Search size={20} style={{ marginLeft: '12px', color: 'var(--text-secondary)', flexShrink: 0 }} />
                 <input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar por título o categoría..."
-                    className="input-field"
-                    style={{ paddingLeft: '48px', maxWidth: '500px' }}
+                    placeholder="Buscar por título..."
+                    style={{ flex: 1, padding: '12px 16px', border: 'none', backgroundColor: 'transparent', outline: 'none', color: 'var(--text-primary)', minWidth: '150px' }}
                 />
             </div>
 
