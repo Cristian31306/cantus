@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus } from 'lucide-react';
 import { CantosRepository, type Canto } from '../../core/cantos/cantos.repository';
@@ -6,7 +6,6 @@ import { CantosRepository, type Canto } from '../../core/cantos/cantos.repositor
 export const CantosList = () => {
     const navigate = useNavigate();
     const [cantos, setCantos] = useState<Canto[]>([]);
-    const [filtered, setFiltered] = useState<Canto[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
 
@@ -17,40 +16,35 @@ export const CantosList = () => {
                 a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' })
             );
             setCantos(sortedData);
-            setFiltered(sortedData);
             setLoading(false);
         });
 
         return () => unsubscribe();
     }, []);
 
-    useEffect(() => {
-        if (!search) {
-            setFiltered(cantos);
-        } else {
-            const normalizeText = (text: string) => {
-                if (!text) return '';
-                return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-            };
-            const lowerQuery = normalizeText(search);
+    const filtered = useMemo(() => {
+        if (!search) return cantos;
 
-            const results = cantos.filter(c =>
-                normalizeText(c.title).includes(lowerQuery) ||
-                normalizeText(c.category).includes(lowerQuery) ||
-                (c.content && normalizeText(c.content).includes(lowerQuery))
-            );
+        const normalizeText = (text: string) => {
+            if (!text) return '';
+            return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        };
+        const lowerQuery = normalizeText(search);
 
-            // Ordenar por relevancia: Match en Título va primero
-            results.sort((a, b) => {
-                const aTitleMatch = normalizeText(a.title).includes(lowerQuery);
-                const bTitleMatch = normalizeText(b.title).includes(lowerQuery);
-                if (aTitleMatch && !bTitleMatch) return -1;
-                if (!aTitleMatch && bTitleMatch) return 1;
-                return 0; // Maintain natural sort for ties
-            });
+        const results = cantos.filter(c =>
+            normalizeText(c.title).includes(lowerQuery) ||
+            normalizeText(c.category).includes(lowerQuery) ||
+            (c.content && normalizeText(c.content).includes(lowerQuery))
+        );
 
-            setFiltered(results);
-        }
+        // Ordenar por relevancia: Match en Título va primero
+        return results.sort((a, b) => {
+            const aTitleMatch = normalizeText(a.title).includes(lowerQuery);
+            const bTitleMatch = normalizeText(b.title).includes(lowerQuery);
+            if (aTitleMatch && !bTitleMatch) return -1;
+            if (!aTitleMatch && bTitleMatch) return 1;
+            return 0;
+        });
     }, [search, cantos]);
 
     return (

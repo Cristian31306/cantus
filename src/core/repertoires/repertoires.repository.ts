@@ -101,16 +101,17 @@ export class RepertoiresRepository {
         const rep = await this.getById(repertoireId);
         if (!rep || !rep.items) return [];
 
-        const populated: RepertoireItem[] = [];
-        for (const item of rep.items) {
+        // Carga en paralelo para evitar waterfall y mejorar velocidad significativamente
+        const populated = await Promise.all(rep.items.map(async (item) => {
             const canto = await CantosRepository.getById(item.canto_id);
-            populated.push({
+            return {
                 ...item,
                 canto_title: canto?.title || 'Canto Eliminado',
                 canto_key: canto?.key || 'C',
                 canto_category: canto?.category || ''
-            });
-        }
+            };
+        }));
+
         return populated.sort((a, b) => a.position - b.position);
     }
 
