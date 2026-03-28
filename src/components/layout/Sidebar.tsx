@@ -17,7 +17,7 @@ export const Sidebar = () => {
         <aside className="app-sidebar">
             <div style={{ padding: '0 12px', marginBottom: '40px' }}>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Music size={28} color="var(--accent-color)" />
+                    <img src="/vite.svg" alt="Cantus Logo" style={{ width: '32px', height: '32px', objectFit: 'contain', filter: 'drop-shadow(0px 2px 4px rgba(59, 130, 246, 0.3))' }} />
                     <span className="sidebar-logo-text">Cantus</span>
                 </h1>
             </div>

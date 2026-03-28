@@ -5,6 +5,7 @@ import { AuthService } from './core/auth/auth.service';
 
 import { AppLayout } from './components/layout/AppLayout';
 import { Login } from './pages/Login';
+import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { CantosList } from './pages/cantos/CantosList';
 import { CantoView } from './pages/cantos/CantoView';
@@ -39,6 +40,7 @@ function App() {
         {!user ? (
           <>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
         ) : (

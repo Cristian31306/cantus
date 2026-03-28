@@ -1,31 +1,34 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { AuthService } from '../core/auth/auth.service';
 
-export const Login = () => {
+export const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         try {
-            await AuthService.signIn(email, password);
+            await AuthService.signUp(email, password);
         } catch (err: any) {
-            console.error(err);
-            let userMessage = 'Error al iniciar sesión. Verifica tus datos.';
-            if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-                userMessage = 'Correo o contraseña incorrectos.';
-            } else if (err.code === 'auth/too-many-requests') {
-                userMessage = 'Demasiados intentos fallidos. Intenta más tarde.';
+            console.error("Error al registrar: ", err);
+            let userMessage = 'Error al crear la cuenta. Por favor, intenta de nuevo.';
+            if (err.code === 'auth/email-already-in-use') {
+                userMessage = 'Este correo electrónico ya está registrado.';
+            } else if (err.code === 'auth/weak-password') {
+                userMessage = 'La contraseña es muy débil (mínimo 6 caracteres).';
             } else if (err.code === 'auth/invalid-email') {
-                userMessage = 'El formato del correo es inválido.';
+                userMessage = 'El formato del correo electrónico no es válido.';
+            } else if (err.code === 'auth/operation-not-allowed') {
+                userMessage = 'El registro con correo y contraseña no está habilitado en Firebase.';
             }
+            
             setError(userMessage);
         } finally {
             setLoading(false);
@@ -37,9 +40,9 @@ export const Login = () => {
             display: 'flex', width: '100vw', height: '100vh',
             alignItems: 'center', justifyContent: 'center',
             backgroundColor: 'var(--bg-color)',
-            backgroundImage: 'radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 40%)'
+            backgroundImage: 'radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent 40%)'
         }}>
-            <form className="glass-panel" onSubmit={handleLogin} style={{
+            <form className="glass-panel" onSubmit={handleRegister} style={{
                 padding: '40px',
                 borderRadius: 'var(--radius-lg)',
                 width: '100%',
@@ -52,14 +55,14 @@ export const Login = () => {
                 <div style={{ textAlign: 'center', marginBottom: '10px' }}>
                     <div style={{
                         display: 'inline-flex', padding: '16px',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         borderRadius: 'var(--radius-full)',
                         marginBottom: '16px'
                     }}>
                         <img src="/vite.svg" alt="Cantus Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
                     </div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Bienvenido a Cantus</h1>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>Inicia sesión para continuar</p>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700 }}>Únete a Cantus</h1>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>Crea tu cuenta para empezar</p>
                 </div>
 
                 {error && (
@@ -120,12 +123,12 @@ export const Login = () => {
                 </div>
 
                 <button type="submit" className="btn-primary" style={{ marginTop: '10px' }} disabled={loading}>
-                    {loading ? 'Iniciando...' : 'Iniciar Sesión'}
+                    {loading ? 'Creando cuenta...' : 'Registrarse'}
                 </button>
 
                 <div style={{ textAlign: 'center', marginTop: '8px' }}>
                     <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                        ¿No tienes una cuenta? <Link to="/register" style={{ color: 'var(--accent-color)', fontWeight: 600 }}>Regístrate</Link>
+                        ¿Ya tienes una cuenta? <Link to="/login" style={{ color: 'var(--accent-color)', fontWeight: 600 }}>Inicia sesión</Link>
                     </p>
                 </div>
             </form>

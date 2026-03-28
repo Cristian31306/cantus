@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, enableMultiTabIndexedDbPersistence } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: "AIzaSyCN7_VxOUbN2X82kkK98_eIblw9fz58lq8",
@@ -13,15 +13,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
-// Activar persistencia local para carga instantánea y soporte offline
-enableMultiTabIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-        console.warn('Persistencia falló: múltiples pestañas abiertas.');
-    } else if (err.code === 'unimplemented') {
-        console.warn('Persistencia no soportada en este navegador.');
-    }
+// Activar persistencia local para carga instantánea y soporte offline con la nueva API
+const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+    })
 });
 
 export { auth, db };

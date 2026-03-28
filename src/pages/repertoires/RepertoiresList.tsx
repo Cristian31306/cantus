@@ -62,13 +62,15 @@ export const RepertoiresList = () => {
         e.preventDefault();
         if (search || draggedItemIdx === null || draggedItemIdx === index) return;
 
-        const itemsCopy = [...filtered];
-        const dragged = itemsCopy[draggedItemIdx];
-        itemsCopy.splice(draggedItemIdx, 1);
-        itemsCopy.splice(index, 0, dragged);
+        setRepertoires((prev) => {
+            const itemsCopy = [...prev];
+            const dragged = itemsCopy[draggedItemIdx];
+            itemsCopy.splice(draggedItemIdx, 1);
+            itemsCopy.splice(index, 0, dragged);
+            return itemsCopy;
+        });
 
         setDraggedItemIdx(index);
-        // Note: In a real app, we'd update the state via a callback or context to keep source of truth
     };
 
     const handleDragEnd = async () => {
@@ -78,7 +80,7 @@ export const RepertoiresList = () => {
         // Sync to firebase in background
         try {
             await Promise.all(
-                filtered.map((r, i) => {
+                repertoires.map((r, i) => {
                     if (r.position !== i) {
                         return RepertoiresRepository.update(r.id!, { position: i });
                     }

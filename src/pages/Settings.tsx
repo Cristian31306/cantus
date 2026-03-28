@@ -226,7 +226,7 @@ export const SettingsPage = () => {
             </div>
 
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center', marginTop: '40px' }}>
-                Cantus Web v1.0.0
+                Cantus V1.2.0
             </p>
         </div>
     );

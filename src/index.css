@@ -319,6 +319,10 @@ button {
     display: flex;
   }
 
+  .app-main {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
   .app-sidebar {
     display: none !important;
   }
@@ -361,5 +365,10 @@ button {
   /* General Cards Mobile */
   .glass-panel {
     padding: 16px !important;
+  }
+
+  /* Make delete buttons always visible on mobile where there is no hover */
+  .delete-btn {
+    opacity: 1 !important;
   }
 }

@@ -178,22 +178,22 @@ export const RepertoireView = () => {
                 <ArrowLeft size={20} /> Volver a Repertorios
             </button>
 
-            <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                    <h1 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '16px' }}>{repertoire.title}</h1>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px', color: 'var(--text-secondary)' }}>
+            <div style={{ marginBottom: '40px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px' }}>
+                <div style={{ flex: '1 1 min-content' }}>
+                    <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 800, marginBottom: '16px', wordBreak: 'break-word' }}>{repertoire.title}</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Clock size={18} />
+                            <Clock size={18} style={{ flexShrink: 0 }} />
                             {formatDate(repertoire.date)}
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Music size={18} />
+                            <Music size={18} style={{ flexShrink: 0 }} />
                             {populatedItems.length} cantos
                         </span>
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                     <button
                         onClick={copyPublicLink}
                         style={{

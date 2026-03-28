@@ -13,7 +13,7 @@ export const CantoView = () => {
 
     const [canto, setCanto] = useState<Canto | null>(null);
     const [loading, setLoading] = useState(true);
-    const { notation, fontSize, setFontSize, cantoOffsets, setCantoOffset } = usePreferencesStore();
+    const { notation, fontSize: globalFontSize, setFontSize: setGlobalFontSize, cantoOffsets, setCantoOffset, cantoFontSizes, setCantoFontSize } = usePreferencesStore();
     
     // El offset inicial viene de:
     // 1. Preferencia local del usuario para ese canto
@@ -21,9 +21,33 @@ export const CantoView = () => {
     const storedOffset = id ? cantoOffsets[id] : undefined;
     const [offsets, setOffsets] = useState(storedOffset !== undefined ? storedOffset : (initialOffset || 0));
 
+    // El fontSize se maneja de manera similar, priorizando el guardado por canto
+    const storedFontSize = id ? cantoFontSizes[id] : undefined;
+    const [fontSize, setLocalFontSize] = useState(storedFontSize !== undefined ? storedFontSize : globalFontSize);
+
     const [showTools, setShowTools] = useState(false);
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+    // Efecto para sincronizar los estados locales (offset y fontSize) cuando cambia el ID del canto (Navegación sin desmontar)
+    useEffect(() => {
+        if (id) {
+            const newStoredOffset = cantoOffsets[id];
+            setOffsets(newStoredOffset !== undefined ? newStoredOffset : (initialOffset || 0));
+
+            const newStoredFontSize = cantoFontSizes[id];
+            setLocalFontSize(newStoredFontSize !== undefined ? newStoredFontSize : globalFontSize);
+        }
+    }, [id]);
+
+    const handleSetFontSize = (size: number) => {
+        setLocalFontSize(size);
+        if (id) {
+            setCantoFontSize(id, size);
+        } else {
+            setGlobalFontSize(size);
+        }
+    };
 
     useEffect(() => {
         if (!id) return;
@@ -282,7 +306,7 @@ export const CantoView = () => {
                     offsets={offsets} 
                     changeOffset={changeOffset} 
                     fontSize={fontSize} 
-                    setFontSize={setFontSize} 
+                    setFontSize={handleSetFontSize} 
                 />
             </div>
 
@@ -308,7 +332,7 @@ export const CantoView = () => {
                             offsets={offsets} 
                             changeOffset={changeOffset} 
                             fontSize={fontSize} 
-                            setFontSize={setFontSize} 
+                            setFontSize={handleSetFontSize} 
                         />
                     </div>
                 </>
