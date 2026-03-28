@@ -38,7 +38,7 @@ export const Dashboard = () => {
 
     return (
         <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '8px' }}>Hola, bienvenido a CantusWeb</h1>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '8px' }}>Hola, bienvenido a Cantus</h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '40px' }}>
                 Aquí tienes un resumen general de tu biblioteca musical.
             </p>
