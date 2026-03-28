@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ChevronUp, ChevronDown, Plus, Minus, Edit, Settings, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CantosRepository, type Canto } from '../../core/cantos/cantos.repository';
-import { RepertoiresRepository } from '../../core/repertoires/repertoires.repository';
 import { ChordProParser } from '../../core/music/chordpro';
 import { usePreferencesStore } from '../../store/preferences';
 
